@@ -12,7 +12,7 @@ docker compose up --build
 - Swagger/OpenAPI docs: http://localhost:8000/docs
 - Postgres 16 (alpine) with a named volume, API seeds admin + sample centres/tests on boot.
 
-Default seeded admin: `admin@eve.local` / `admin12345` (change via env).
+Default seeded admin: `admin@evehealth.com` / `admin12345` (change via env).
 
 ## Quick start (local, without Docker)
 

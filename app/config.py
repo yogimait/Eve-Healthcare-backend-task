@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     rate_limit_payments: int = 30
     rate_limit_window_seconds: int = 60
 
-    seed_admin_email: str = "admin@eve.local"
+    seed_admin_email: str = "admin@evehealth.com"
     seed_admin_password: str = "admin12345"
 
 
