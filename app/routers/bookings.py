@@ -61,7 +61,6 @@ def create_booking(body: BookingCreate, user: User = Depends(get_current_user), 
             details={"appointment": body.appointment.isoformat()},
         )
 
-    # ponytail: row lock only on Postgres; SQLite is single-writer so no lock needed
     use_row_lock = db.bind.dialect.name == "postgresql"
     db.get(Centre, body.centre_id, with_for_update=use_row_lock)
 

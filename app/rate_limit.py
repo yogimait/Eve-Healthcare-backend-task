@@ -6,7 +6,6 @@ from fastapi import Request
 from app.config import settings
 from app.errors import app_error
 
-# ponytail: in-memory sliding window, single-process only; swap to Redis if running multiple workers
 _calls: dict[str, deque] = {}
 
 
