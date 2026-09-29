@@ -35,7 +35,7 @@ SQLite fallback (no Postgres needed): set `DATABASE_URL=sqlite:///./eve.db`.
 | `DATABASE_URL` | `postgresql+psycopg://eve:eve@localhost:5432/eve` | SQLAlchemy URL |
 | `JWT_SECRET` | `dev-secret-change-me` | JWT signing key (use 32+ bytes) |
 | `WEBHOOK_SECRET` | `dev-webhook-secret-change-me` | HMAC key for `X-Webhook-Signature` |
-| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@eve.local` / `admin12345` | seeded admin |
+| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | `admin@evehealth.com` / `admin12345` | seeded admin |
 | `RATE_LIMIT_AUTH` / `RATE_LIMIT_PAYMENTS` | `10` / `30` | requests per window per IP |
 | `RETRY_LOOP_ENABLED` | `true` | background webhook retry loop |
 
@@ -138,11 +138,11 @@ webhook_events(event_id PK, payment_id FK nullable, payload JSON, status, attemp
 
 1. **Payment flow** — `POST /payments` (mode `direct`, default) simulates processing synchronously and atomically updates payment + booking in one transaction. Mode `webhook` leaves the payment `PENDING` and the simulated provider delivers an event to `POST /payments/webhook` ~1.5s later, exercising the real webhook path.
 2. **Idempotency** — `webhook_events.event_id` is the primary key. First delivery inserts the event, then processes it in one transaction. Duplicates get `200 {"processed": false}` with no state change. Conflicting status for an already-final payment is stored as `PERMANENTLY_FAILED` — never applied.
-3. **Webhook retries** — events that reference a not-yet-known payment (or hit a transient error) are stored and retried by an in-process background loop with exponential backoff (2^n seconds, max 5 attempts), then marked `PERMANENTLY_FAILED`. `# ponytail:` in-process only — swap to Celery/Redis if multiple workers are needed.
+3. **Webhook retries** — events that reference a not-yet-known payment (or hit a transient error) are stored and retried by an in-process background loop with exponential backoff (2^n seconds, max 5 attempts), then marked `PERMANENTLY_FAILED`. In-process only — swap to Celery/Redis if multiple workers are needed.
 4. **Webhook security** — `X-Webhook-Signature` must be the HMAC-SHA256 hex digest of the raw request body using `WEBHOOK_SECRET`; verified with `hmac.compare_digest`.
 5. **Slots** — one active booking (`PENDING`/`CONFIRMED`) per centre per exact appointment time. Cancelled bookings free the slot. Past appointments are rejected. Centre row is locked with `SELECT ... FOR UPDATE` on Postgres during booking to avoid races.
 6. **Payments** — one attempt per booking; a failed payment leaves the booking `FAILED` (book again rather than retry). Cancelling is blocked while a payment is `PENDING` for that booking.
-7. **Rate limiting** — in-memory sliding window per IP on auth/payment endpoints (`# ponytail:` single-process; use Redis for multi-worker).
+7. **Rate limiting** — in-memory sliding window per IP on auth/payment endpoints. Single-process; use Redis for multi-worker.
 8. **Admin** — seeded `is_admin` user manages centres/tests/prices. Regular users can only read.
 9. Schema is created with `create_all` on startup; no Alembic (noted as an improvement).
 
